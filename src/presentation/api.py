@@ -40,7 +40,6 @@ class SettingsSchema(BaseModel):
     api_key: str
     model_name: str
 
-
 def get_current_user(authorization: str = Header(None)) -> Dict[str, Any]:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Отсутствует или невалиден заголовок авторизации")
@@ -54,7 +53,6 @@ def get_current_user(authorization: str = Header(None)) -> Dict[str, Any]:
         return {"user_id": user_id, "roles": roles}
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Ошибка разбора сессионного токена: {str(e)}")
-
 
 def check_admin(user: Dict[str, Any] = Depends(get_current_user)):
     if "Admin" not in user["roles"]:
