@@ -19,7 +19,7 @@ from src.application.use_cases import AnalyzeTelemetryUseCase, GetAIRecommendati
 from src.infrastructure.services import PdfReportGenerator
 from src.infrastructure.repositories import PostgreSqlSettingsRepository, PostgreSqlHistoryRepository
 from src.infrastructure.pytorch_models import LSTMAutoencoder
-from src.train_utils import run_full_training
+from src.infrastructure.train_utils import run_full_training
 from src.presentation.dependencies import (
     get_analyze_telemetry_use_case, get_report_generator,
     get_ai_recommendation_use_case, get_manage_settings_use_case
