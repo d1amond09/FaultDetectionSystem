@@ -203,3 +203,31 @@ class AnalyzeTelemetryUseCase:
             survival_statement=g_statement,
             sensors_diagnostics=sensors_diagnostics
         )
+
+
+class GetAIRecommendationUseCase:
+    def __init__(self, settings_repo: ISettingsRepository, llm_service: ILLMService):
+        self._settings_repo = settings_repo
+        self._llm_service = llm_service
+
+    def execute(self, telemetry_summary: Dict[str, Any]) -> str:
+        settings = self._settings_repo.get_settings()
+        return self._llm_service.analyze(
+            telemetry_summary,
+            settings.get("api_key", ""),
+            settings.get("model_name", "openai/gpt-latest")
+        )
+
+
+class ManageSettingsUseCase:
+    def __init__(self, settings_repo: ISettingsRepository):
+        self._settings_repo = settings_repo
+
+    def get_settings(self) -> Dict[str, str]:
+        return self._settings_repo.get_settings()
+
+    def save_settings(self, api_key: str, model_name: str) -> None:
+        self._settings_repo.save_settings({
+            "api_key": api_key,
+            "model_name": model_name
+        })
