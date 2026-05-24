@@ -6,6 +6,8 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 MODEL_DIR = os.path.join(BASE_DIR, 'models')
 STORAGE_DIR = os.path.join(BASE_DIR, 'storage')
 
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(MODEL_DIR, exist_ok=True)
 os.makedirs(STORAGE_DIR, exist_ok=True)
