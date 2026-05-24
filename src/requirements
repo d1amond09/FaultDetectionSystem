@@ -1,0 +1,13 @@
+fastapi
+pydantic
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+fpdf
+joblib
+pyjwt
+sqlalchemy
+psycopg2-binary
+torch
