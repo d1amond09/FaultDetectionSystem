@@ -1,5 +1,4 @@
 import os
-import torch
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from src.infrastructure.database import get_db
@@ -8,7 +7,7 @@ from src.infrastructure.services import MatplotlibPlotterService, PdfReportGener
 from src.application.use_cases import AnalyzeTelemetryUseCase, GetAIRecommendationUseCase, ManageSettingsUseCase
 
 MODEL_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "models")
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "cpu"
 
 _repository = LocalModelRepository(MODEL_DIR, DEVICE)
 _plotter = MatplotlibPlotterService()
