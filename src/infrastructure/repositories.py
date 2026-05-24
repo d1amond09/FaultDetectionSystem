@@ -28,24 +28,38 @@ class LocalModelRepository(IModelRepository):
         cls = self._neural_classes[name]
         module = cls(input_dim)
         path = os.path.join(self._model_dir, f"{name}.pth")
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Файл весов нейросети {name}.pth не обнаружен на сервере. Пожалуйста, запустите обучение.")
         module.load_state_dict(torch.load(path, map_location=self._device, weights_only=True))
         return NeuralModelAdapter(module, self._device)
 
     def load_classical_model(self, name: str) -> Any:
-        return joblib.load(os.path.join(self._model_dir, f"{name}.pkl"))
+        path = os.path.join(self._model_dir, f"{name}.pkl")
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Файл классической модели {name}.pkl не обнаружен на сервере. Пожалуйста, запустите обучение.")
+        return joblib.load(path)
 
     def load_scaler(self) -> Any:
-        return joblib.load(os.path.join(self._model_dir, "scaler.pkl"))
+        path = os.path.join(self._model_dir, "scaler.pkl")
+        if not os.path.exists(path):
+            raise FileNotFoundError("Масштабизатор scaler.pkl не найден. Пожалуйста, запустите обучение.")
+        return joblib.load(path)
 
     def load_valid_columns(self) -> List[str]:
-        return joblib.load(os.path.join(self._model_dir, "valid_cols.pkl"))
+        path = os.path.join(self._model_dir, "valid_cols.pkl")
+        if not os.path.exists(path):
+            raise FileNotFoundError("Файл valid_cols.pkl не найден. Пожалуйста, запустите обучение.")
+        return joblib.load(path)
 
     def load_thresholds(self) -> Dict[str, float]:
-        with open(os.path.join(self._model_dir, "thresholds.json"), "r") as f:
+        path = os.path.join(self._model_dir, "thresholds.json")
+        if not os.path.exists(path):
+            raise FileNotFoundError("Файл порогов thresholds.json не найден. Пожалуйста, запустите обучение.")
+        with open(path, "r") as f:
             return json.load(f)
 
     def save_thresholds(self, thresholds: Dict[str, float]) -> None:
-        with open(os.path.join(self._model_dir, "thresholds.json"), "w") as f:
+        with open(os.path.join(self._model_dir, "thresholds.json"), "r+") as f:
             json.dump(thresholds, f, indent=2)
 
 class PostgreSqlSettingsRepository(ISettingsRepository):

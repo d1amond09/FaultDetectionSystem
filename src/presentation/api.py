@@ -19,7 +19,7 @@ from src.application.use_cases import AnalyzeTelemetryUseCase, GetAIRecommendati
 from src.infrastructure.services import PdfReportGenerator
 from src.infrastructure.repositories import PostgreSqlSettingsRepository, PostgreSqlHistoryRepository
 from src.infrastructure.pytorch_models import LSTMAutoencoder
-from src.infrastructure.train_utils import run_full_training
+from src.train_utils import run_full_training
 from src.presentation.dependencies import (
     get_analyze_telemetry_use_case, get_report_generator,
     get_ai_recommendation_use_case, get_manage_settings_use_case
@@ -40,6 +40,7 @@ class SettingsSchema(BaseModel):
     api_key: str
     model_name: str
 
+
 def get_current_user(authorization: str = Header(None)) -> Dict[str, Any]:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Отсутствует или невалиден заголовок авторизации")
@@ -53,6 +54,7 @@ def get_current_user(authorization: str = Header(None)) -> Dict[str, Any]:
         return {"user_id": user_id, "roles": roles}
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Ошибка разбора сессионного токена: {str(e)}")
+
 
 def check_admin(user: Dict[str, Any] = Depends(get_current_user)):
     if "Admin" not in user["roles"]:
@@ -68,15 +70,20 @@ def predict(
         user: Dict[str, Any] = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
-    content = file.file.read()
-    result = use_case.execute(content, file.filename, model_type)
+    try:
+        content = file.file.read()
+        result = use_case.execute(content, file.filename, model_type)
 
-    history_repo = PostgreSqlHistoryRepository(db)
-    history_repo.log_activity(user["user_id"], "Предиктивный анализ",
-                              f"Запуск анализа файла '{file.filename}' по модели '{model_type}' (Индекс здоровья SOH: {result.soh}%)")
-    history_repo.log_analysis(user["user_id"], result.model_dump())
+        history_repo = PostgreSqlHistoryRepository(db)
+        history_repo.log_activity(user["user_id"], "Предиктивный анализ",
+                                  f"Запуск анализа файла '{file.filename}' по модели '{model_type}' (Индекс здоровья SOH: {result.soh}%)")
+        history_repo.log_analysis(user["user_id"], result.model_dump())
 
-    return result
+        return result
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Внутренняя ошибка обработки на сервере: {str(e)}")
 
 
 @router.post("/export_pdf")
