@@ -13,3 +13,4 @@ pyjwt
 sqlalchemy
 psycopg2-binary
 torch
+python-multipart
