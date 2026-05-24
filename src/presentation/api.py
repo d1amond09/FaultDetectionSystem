@@ -2,11 +2,6 @@ import os
 import io
 import json
 import jwt
-import joblib
-import torch
-import torch.nn as nn
-import pandas as pd
-import numpy as np
 import threading
 from fastapi import APIRouter, Depends, File, UploadFile, Form, Response, Header, HTTPException
 from fastapi.responses import Response as FastApiResponse
@@ -18,8 +13,6 @@ from src.application.dtos import TelemetryAnalysisResponse
 from src.application.use_cases import AnalyzeTelemetryUseCase, GetAIRecommendationUseCase, ManageSettingsUseCase
 from src.infrastructure.services import PdfReportGenerator
 from src.infrastructure.repositories import PostgreSqlSettingsRepository, PostgreSqlHistoryRepository
-from src.infrastructure.pytorch_models import LSTMAutoencoder
-from src.infrastructure.train_utils import run_full_training
 from src.presentation.dependencies import (
     get_analyze_telemetry_use_case, get_report_generator,
     get_ai_recommendation_use_case, get_manage_settings_use_case
@@ -30,7 +23,7 @@ router = APIRouter()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 STORAGE_DIR = os.path.join(BASE_DIR, 'storage')
 MODEL_DIR = os.path.join(BASE_DIR, 'models')
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = "cpu"
 
 training_log = []
 training_status = "idle"
@@ -204,6 +197,7 @@ def start_training(
         training_log = ["Начало обучения..."]
         training_status = "running"
         try:
+            from src.train_utils import run_full_training
             run_full_training(saved_paths, model_choice, log_callback=lambda msg: training_log.append(msg))
             training_status = "done"
         except Exception as e:
@@ -234,6 +228,11 @@ def retrain(
     if not os.path.exists(f_path):
         return {"error": "Нет данных для адаптации"}
     try:
+        import joblib
+        import pandas as pd
+        import numpy as np
+        from src.infrastructure.pytorch_models import LSTMAutoencoder
+
         valid_cols = joblib.load(os.path.join(MODEL_DIR, 'valid_cols.pkl'))
         scaler = joblib.load(os.path.join(MODEL_DIR, 'scaler.pkl'))
         thresholds = json.load(open(os.path.join(MODEL_DIR, 'thresholds.json')))

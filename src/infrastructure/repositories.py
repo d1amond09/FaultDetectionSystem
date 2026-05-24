@@ -1,21 +1,25 @@
 import os
 import json
-import joblib
-import torch
 from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from src.domain.interfaces import IModelRepository, IAnomalyModel, ISettingsRepository, IHistoryRepository
 from src.infrastructure.database import LlmSetting, UserActivityLog, TelemetryAnalysisRecord
-from src.infrastructure.pytorch_models import (
-    LSTMAutoencoder, GRUAutoencoder, Conv1DAutoencoder,
-    VAEAutoencoder, TransformerAutoencoder, TCNAutoencoder, NeuralModelAdapter
-)
 
 class LocalModelRepository(IModelRepository):
     def __init__(self, model_dir: str, device: str):
         self._model_dir = model_dir
-        self._device = torch.device(device)
-        self._neural_classes = {
+        self._device = device
+
+    def load_neural_model(self, name: str, input_dim: int) -> IAnomalyModel:
+        import torch
+        from src.infrastructure.pytorch_models import (
+            LSTMAutoencoder, GRUAutoencoder, Conv1DAutoencoder,
+            VAEAutoencoder, TransformerAutoencoder, TCNAutoencoder, NeuralModelAdapter
+        )
+        torch.set_num_threads(1)
+        torch.set_num_interop_threads(1)
+
+        neural_classes = {
             'lstm': LSTMAutoencoder,
             'gru': GRUAutoencoder,
             'cnn': Conv1DAutoencoder,
@@ -24,8 +28,7 @@ class LocalModelRepository(IModelRepository):
             'tcn': TCNAutoencoder
         }
 
-    def load_neural_model(self, name: str, input_dim: int) -> IAnomalyModel:
-        cls = self._neural_classes[name]
+        cls = neural_classes[name]
         module = cls(input_dim)
         path = os.path.join(self._model_dir, f"{name}.pth")
         if not os.path.exists(path):
@@ -34,18 +37,21 @@ class LocalModelRepository(IModelRepository):
         return NeuralModelAdapter(module, self._device)
 
     def load_classical_model(self, name: str) -> Any:
+        import joblib
         path = os.path.join(self._model_dir, f"{name}.pkl")
         if not os.path.exists(path):
             raise FileNotFoundError(f"Файл классической модели {name}.pkl не обнаружен на сервере. Пожалуйста, запустите обучение.")
         return joblib.load(path)
 
     def load_scaler(self) -> Any:
+        import joblib
         path = os.path.join(self._model_dir, "scaler.pkl")
         if not os.path.exists(path):
             raise FileNotFoundError("Масштабизатор scaler.pkl не найден. Пожалуйста, запустите обучение.")
         return joblib.load(path)
 
     def load_valid_columns(self) -> List[str]:
+        import joblib
         path = os.path.join(self._model_dir, "valid_cols.pkl")
         if not os.path.exists(path):
             raise FileNotFoundError("Файл valid_cols.pkl не найден. Пожалуйста, запустите обучение.")
@@ -59,7 +65,10 @@ class LocalModelRepository(IModelRepository):
             return json.load(f)
 
     def save_thresholds(self, thresholds: Dict[str, float]) -> None:
-        with open(os.path.join(self._model_dir, "thresholds.json"), "r+") as f:
+        path = os.path.join(self._model_dir, "thresholds.json")
+        if not os.path.exists(path):
+            raise FileNotFoundError("Файл порогов thresholds.json не найден. Пожалуйста, запустите обучение.")
+        with open(path, "w") as f:
             json.dump(thresholds, f, indent=2)
 
 class PostgreSqlSettingsRepository(ISettingsRepository):

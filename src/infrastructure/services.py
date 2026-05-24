@@ -1,23 +1,16 @@
 import io
 import base64
 import requests
-import threading
-import numpy as np
-import matplotlib
-
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import seaborn as sns
 from typing import List, Any, Dict
 from fpdf import FPDF
 import tempfile
 import os
-from sklearn.linear_model import LinearRegression
 from src.domain.interfaces import IPlotterService, IReportGenerator, ILLMService
 
 
 class OpenRouterLLMService(ILLMService):
     def __init__(self):
+        import threading
         self._is_running = False
         self._lock = threading.Lock()
 
@@ -89,13 +82,20 @@ class OpenRouterLLMService(ILLMService):
 
 
 class MatplotlibPlotterService(IPlotterService):
-    def _to_b64(self, fig: plt.Figure) -> str:
+    def _to_b64(self, fig: Any) -> str:
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches='tight', facecolor='#1e293b')
+        import matplotlib.pyplot as plt
         plt.close(fig)
         return base64.b64encode(buf.getvalue()).decode()
 
-    def create_trend_graph(self, x: np.ndarray, y: np.ndarray, trend: np.ndarray, threshold: float, steps: Any) -> str:
+    def create_trend_graph(self, x: Any, y: Any, trend: Any, threshold: float, steps: Any) -> str:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        from sklearn.linear_model import LinearRegression
+        import numpy as np
+
         fig, ax = plt.subplots(figsize=(10, 2.5))
         fig.patch.set_facecolor('#1e293b')
         ax.set_facecolor('#1e293b')
@@ -120,7 +120,11 @@ class MatplotlibPlotterService(IPlotterService):
         ax.tick_params(colors='white')
         return self._to_b64(fig)
 
-    def create_simple_line_graph(self, data: np.ndarray, threshold: float) -> str:
+    def create_simple_line_graph(self, data: Any, threshold: float) -> str:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots(figsize=(10, 3))
         fig.patch.set_facecolor('#1e293b')
         ax.set_facecolor('#1e293b')
@@ -130,7 +134,13 @@ class MatplotlibPlotterService(IPlotterService):
         ax.tick_params(colors='white')
         return self._to_b64(fig)
 
-    def create_heatmap(self, data: np.ndarray, labels: List[str]) -> str:
+    def create_heatmap(self, data: Any, labels: List[str]) -> str:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        import numpy as np
+
         fig, ax = plt.subplots(figsize=(10, 4))
         fig.patch.set_facecolor('#1e293b')
         source = data[-60:].T if data.any() else np.zeros((len(labels), 60))
@@ -138,7 +148,12 @@ class MatplotlibPlotterService(IPlotterService):
         ax.tick_params(axis='y', colors='white', labelsize=6)
         return self._to_b64(fig)
 
-    def create_distribution_graph(self, data: np.ndarray) -> str:
+    def create_distribution_graph(self, data: Any) -> str:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+
         fig, ax = plt.subplots(figsize=(5, 3))
         fig.patch.set_facecolor('#1e293b')
         ax.set_facecolor('#1e293b')
@@ -147,7 +162,13 @@ class MatplotlibPlotterService(IPlotterService):
         ax.tick_params(colors='white')
         return self._to_b64(fig)
 
-    def create_importance_graph(self, importance: np.ndarray, labels: List[str]) -> str:
+    def create_importance_graph(self, importance: Any, labels: List[str]) -> str:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        import numpy as np
+
         fig, ax = plt.subplots(figsize=(5, 3))
         fig.patch.set_facecolor('#1e293b')
         ax.set_facecolor('#1e293b')
@@ -157,7 +178,12 @@ class MatplotlibPlotterService(IPlotterService):
         ax.tick_params(colors='white', labelsize=7)
         return self._to_b64(fig)
 
-    def create_cumulative_graph(self, data: np.ndarray) -> str:
+    def create_cumulative_graph(self, data: Any) -> str:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import numpy as np
+
         fig, ax = plt.subplots(figsize=(10, 3))
         fig.patch.set_facecolor('#1e293b')
         ax.set_facecolor('#1e293b')
@@ -166,13 +192,22 @@ class MatplotlibPlotterService(IPlotterService):
         ax.tick_params(colors='white')
         return self._to_b64(fig)
 
-    def create_correlation_graph(self, matrix: np.ndarray) -> str:
+    def create_correlation_graph(self, matrix: Any) -> str:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+
         fig, ax = plt.subplots(figsize=(4, 4))
         fig.patch.set_facecolor('#1e293b')
         sns.heatmap(matrix, cmap='coolwarm', center=0, cbar=False, xticklabels=False, yticklabels=False)
         return self._to_b64(fig)
 
-    def create_adaptive_graph(self, data: np.ndarray, adaptive: np.ndarray, threshold: float) -> str:
+    def create_adaptive_graph(self, data: Any, adaptive: Any, threshold: float) -> str:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots(figsize=(10, 2.5))
         fig.patch.set_facecolor('#1e293b')
         ax.set_facecolor('#1e293b')
@@ -183,7 +218,11 @@ class MatplotlibPlotterService(IPlotterService):
         ax.tick_params(colors='white')
         return self._to_b64(fig)
 
-    def create_acceleration_graph(self, data: np.ndarray) -> str:
+    def create_acceleration_graph(self, data: Any) -> str:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots(figsize=(10, 2.5))
         fig.patch.set_facecolor('#1e293b')
         ax.set_facecolor('#1e293b')
@@ -193,7 +232,11 @@ class MatplotlibPlotterService(IPlotterService):
         ax.tick_params(colors='white')
         return self._to_b64(fig)
 
-    def create_holt_graph(self, data: np.ndarray, forecast: np.ndarray, adaptive_threshold: float) -> str:
+    def create_holt_graph(self, data: Any, forecast: Any, adaptive_threshold: float) -> str:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots(figsize=(10, 2.5))
         fig.patch.set_facecolor('#1e293b')
         ax.set_facecolor('#1e293b')
@@ -207,44 +250,23 @@ class MatplotlibPlotterService(IPlotterService):
 
 
 class PdfReportGenerator(IReportGenerator):
-    def generate_pdf(self, summary: Dict[str, Any], graphs: List[str]) -> bytes:
+    def generate_pdf(self, filename: str, soh: int, graphs: List[str]) -> bytes:
         pdf = FPDF()
         pdf.add_page()
         pdf.add_font("Arial", "", "C:\\Windows\\Fonts\\arial.ttf", uni=True)
         pdf.set_font("Arial", "", 16)
-        pdf.cell(0, 10, f"ОТЧЕТ ПРЕДИКТИВНОЙ ДИАГНОСТИКИ ИИ: {summary.get('filename')}", ln=1, align="C")
-        pdf.ln(5)
-
-        pdf.set_font("Arial", "", 10)
-        metrics = [
-            f"Индекс здоровья (SOH): {summary.get('soh')}%",
-            f"Аппаратный ресурс RUL: {summary.get('final_rul')}",
-            f"Всего проанализировано окон данных: {summary.get('total_windows')}",
-            f"Выявлено аномальных интервалов: {summary.get('num_anomalies')}",
-            f"Математический базовый порог MAE: {summary.get('threshold')}",
-            f"Наиболее вероятный поврежденный узел (Culprit): {summary.get('culprit')}",
-            f"Достоверность прогноза: {summary.get('conf')}",
-            f"Рекомендация инженера: {summary.get('recommendation')}"
-        ]
-
-        for metric in metrics:
-            pdf.multi_cell(0, 7, metric)
-
-        pdf.ln(5)
-        pdf.set_font("Arial", "", 13)
-        pdf.cell(0, 10, "СПЕКТРАЛЬНО-ГРАФИЧЕСКИЙ АНАЛИЗ", ln=1, align="C")
-        pdf.ln(5)
+        pdf.cell(0, 10, f"ОТЧЕТ ДИАГНОСТИКИ ИИ: {filename}", ln=1, align="C")
+        pdf.set_font("Arial", "", 12)
+        pdf.cell(0, 10, f"ИНДЕКС ЗДОРОВЬЯ: {soh}%", ln=1, align="C")
 
         for graph_b64 in graphs:
             if graph_b64 and len(graph_b64) > 100:
                 tmp_path = tempfile.mktemp(suffix=".png")
                 with open(tmp_path, "wb") as f:
                     f.write(base64.b64decode(graph_b64))
-
                 pdf.image(tmp_path, x=10, w=190)
                 pdf.ln(5)
                 os.remove(tmp_path)
-
                 if pdf.get_y() > 220:
                     pdf.add_page()
 

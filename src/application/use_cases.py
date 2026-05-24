@@ -1,8 +1,5 @@
 import io
-import numpy as np
-import pandas as pd
 from typing import List, Any, Dict, Tuple
-from sklearn.linear_model import LinearRegression
 from src.domain.interfaces import IModelRepository, IPlotterService, IReportGenerator, ISettingsRepository, ILLMService
 from src.domain.services import RulEstimator, RuleEngine
 from src.domain.entities import TelemetryData
@@ -20,10 +17,13 @@ class AnalyzeTelemetryUseCase:
 
     def _calculate_weibull_survival(
             self,
-            errors_series: np.ndarray,
+            errors_series: Any,
             threshold: float,
             avg_interval_sec: float
     ) -> Tuple[List[int], List[float], str]:
+        import numpy as np
+        from sklearn.linear_model import LinearRegression
+
         window_len = min(len(errors_series), 100)
         x_trend = np.arange(window_len).reshape(-1, 1)
         y_trend = errors_series[-window_len:]
@@ -72,6 +72,9 @@ class AnalyzeTelemetryUseCase:
         return timeline, probabilities, statement
 
     def execute(self, file_content: bytes, filename: str, model_type: str) -> TelemetryAnalysisResponse:
+        import numpy as np
+        import pandas as pd
+
         df = pd.read_csv(io.BytesIO(file_content))
         timestamps = pd.to_datetime(df['Столбец_1']) if 'Столбец_1' in df.columns else None
         df.drop(columns=['Столбец_0', 'Столбец_1'], inplace=True, errors='ignore')
@@ -200,31 +203,3 @@ class AnalyzeTelemetryUseCase:
             survival_statement=g_statement,
             sensors_diagnostics=sensors_diagnostics
         )
-
-
-class GetAIRecommendationUseCase:
-    def __init__(self, settings_repo: ISettingsRepository, llm_service: ILLMService):
-        self._settings_repo = settings_repo
-        self._llm_service = llm_service
-
-    def execute(self, telemetry_summary: Dict[str, Any]) -> str:
-        settings = self._settings_repo.get_settings()
-        return self._llm_service.analyze(
-            telemetry_summary,
-            settings.get("api_key", ""),
-            settings.get("model_name", "openai/gpt-latest")
-        )
-
-
-class ManageSettingsUseCase:
-    def __init__(self, settings_repo: ISettingsRepository):
-        self._settings_repo = settings_repo
-
-    def get_settings(self) -> Dict[str, str]:
-        return self._settings_repo.get_settings()
-
-    def save_settings(self, api_key: str, model_name: str) -> None:
-        self._settings_repo.save_settings({
-            "api_key": api_key,
-            "model_name": model_name
-        })
